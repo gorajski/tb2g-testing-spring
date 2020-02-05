@@ -45,8 +45,6 @@ class VetControllerTest {
         then(service).should().findVets();
         then(model).should().put(anyString(), any());
         assertThat(view).isEqualToIgnoringCase("vets/vetList");
-        assertThat(model.get("vets")).isNotNull();
-        assertThat(((Vets) model.get("vets")).getVetList().size()).isEqualTo(2);
     }
 
     @Test
