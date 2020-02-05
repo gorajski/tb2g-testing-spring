@@ -13,8 +13,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestPropertySource("classpath:yanny.properties")
 @ActiveProfiles("externalized")
-@SpringJUnitConfig(classes = PropertiesWordProducerTest.TestConfig.class)
-class PropertiesWordProducerTest {
+@SpringJUnitConfig(classes = PropertiesWordProducerYannyTest.TestConfig.class)
+class PropertiesWordProducerYannyTest {
 
     @Configuration
     @ComponentScan("org.springframework.samples.petclinic.sfg")
