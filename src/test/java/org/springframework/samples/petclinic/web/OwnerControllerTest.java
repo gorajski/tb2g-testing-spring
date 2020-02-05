@@ -1,7 +1,13 @@
 package org.springframework.samples.petclinic.web;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.samples.petclinic.model.Owner;
 import org.springframework.samples.petclinic.service.ClinicService;
@@ -12,11 +18,15 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.util.Arrays;
 import java.util.Collections;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@ExtendWith(MockitoExtension.class)  //Since Mock wired in via XML, we only need this to make the @Captor annotation work
 @SpringJUnitWebConfig(locations = {"classpath:spring/mvc-test-config.xml", "classpath:spring/mvc-core-config.xml"})
 class OwnerControllerTest {
 
@@ -28,9 +38,17 @@ class OwnerControllerTest {
 
     private MockMvc mockMvc;
 
+    @Captor
+    ArgumentCaptor<String> stringArgumentCaptor;
+
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(ownerController).build();
+    }
+
+    @AfterEach
+    void tearDown() {
+        Mockito.reset(clinicService);
     }
 
     @Test
@@ -53,6 +71,8 @@ class OwnerControllerTest {
         )
                 .andExpect(status().is3xxRedirection())
         .andExpect(view().name("redirect:/owners/33"));
+
+        then(clinicService).should().findOwnerByLastName(anyString());
     }
 
     @Test
@@ -63,6 +83,20 @@ class OwnerControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(model().attributeExists("selections"))
                 .andExpect(view().name("owners/ownersList"));
+    }
+
+    @Test
+    void processFindForm_returnsOwnersListView_whenMultipleOwnersFound_hisImplementation() throws Exception {
+        given(clinicService.findOwnerByLastName(eq(""))).willReturn(Arrays.asList(new Owner(), new Owner()));
+
+        mockMvc.perform(get("/owners"))
+                .andExpect(status().isOk())
+                .andExpect(model().attributeExists("selections"))
+                .andExpect(view().name("owners/ownersList"));
+
+        then(clinicService).should().findOwnerByLastName(stringArgumentCaptor.capture());
+
+        assertThat(stringArgumentCaptor.getValue()).isEqualToIgnoringCase("");
     }
 
     @Test
